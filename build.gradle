@@ -1,0 +1,98 @@
+import xyz.volta.Dependencies
+
+plugins {
+  id("org.jetbrains.kotlin.jvm")
+  id("io.github.gradle-nexus.publish-plugin")
+}
+
+repositories {
+  mavenCentral()
+}
+
+nexusPublishing {
+  repositories {
+    sonatype {
+      username = System.getenv("SONATYPE_USERNAME")
+      password = System.getenv("SONATYPE_PASSWORD")
+      nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+      snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+    }
+  }
+}
+
+subprojects { p ->
+  apply(plugin: "java")
+  apply(plugin: "maven-publish")
+  apply(plugin: "signing")
+
+  group = "xyz.volta.sdk"
+  version = "1.0.0"
+
+  repositories {
+    mavenCentral()
+  }
+
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(8)
+    }
+    withJavadocJar()
+    withSourcesJar()
+  }
+
+  kotlin {
+    jvmToolchain {
+      languageVersion.set(JavaLanguageVersion.of(8))
+    }
+  }
+
+  dependencies {
+    testImplementation(Dependencies.Testing.JUPITER)
+  }
+
+  tasks {
+    test {
+      useJUnitPlatform()
+    }
+  }
+
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from(components["java"])
+        afterEvaluate {
+          artifactId = p.name
+          group = group
+          version = version
+        }
+
+        pom {
+          name = p.name
+          url = "https://voltawallet.xyz/"
+          description = "Volta Java SDK"
+          licenses {
+            license {
+              name = "Apache License, Version 2.0"
+            }
+          }
+          developers {
+            developer {
+              id = "volta"
+              name = "Volta Developers"
+              email = "chan@volta.xyz"
+            }
+          }
+          scm {
+            connection = "scm:git@github.com:NuKeyHQ/sdk-java.git"
+            url = "https://github.com/NuKeyHQ/sdk-java.git"
+          }
+        }
+      }
+    }
+  }
+
+  signing {
+    sign publishing.publications["mavenJava"]
+  }
+}
+
