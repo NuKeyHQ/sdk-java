@@ -4,6 +4,7 @@ object Dependencies {
 
   object Web3j {
     const val CORE = "org.web3j:core:4.10.0"
+    const val EVM = "org.web3j:web3j-evm:4.10.0"
   }
 
   object Testing {
