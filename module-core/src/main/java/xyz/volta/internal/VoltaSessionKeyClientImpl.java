@@ -21,6 +21,12 @@ class VoltaSessionKeyClientImpl implements VoltaSessionKeyClient {
     private static final String ERR_INVALID_MAX_FEE_PER_GAS = "invalid max fee per gas";
     private static final String ERR_INVALID_MAX_PRIORITY_FEE_PER_GAS = "invalid max priority fee per gas";
 
+    private final BundleApiClient bundleApiClient;
+
+    VoltaSessionKeyClientImpl(BundleApiClient bundleApiClient) {
+        this.bundleApiClient = bundleApiClient;
+    }
+
     @Override
     public Single<UserOperation> buildUserOperation(BuildUserOperationParams params) {
         String errorMsg = validateParams(params);
@@ -40,7 +46,12 @@ class VoltaSessionKeyClientImpl implements VoltaSessionKeyClient {
                 .setEntryPointAddress(entryPointAddress)
                 .build();
 
-        return Single.just(userOperation);
+        return bundleApiClient.estimateUserOperationGas(params.getBlockchain(), userOperation, entryPointAddress)
+                .map(it -> userOperation.copyToBuilder()
+                        .setPreVerificationGas(it.getPreVerificationGas())
+                        .setVerificationGasLimit(it.getVerificationGas())
+                        .setCallGasLimit(it.getCallGasLimit())
+                        .build());
     }
 
     private String validateParams(BuildUserOperationParams params) {
@@ -77,5 +88,23 @@ class VoltaSessionKeyClientImpl implements VoltaSessionKeyClient {
         }
 
         return null;
+    }
+
+    @Override
+    public Single<String> sendUserOperation(UserOperation op) {
+        String error = null;
+        if (op == null) {
+            error = "Input param is null";
+        } else if (op.getBlockchain() == null) {
+            error = "Blockchain param must be not null";
+        } else if (!Utils.isHexAddress(op.getEntryPointAddress())) {
+            error = "Invalid entry point address";
+        } else if (Utils.isNullOrBlank(op.getSignature())) {
+            error = "User operation must be signed before sending";
+        }
+        if (error != null) {
+            return Single.error(new IllegalArgumentException(error));
+        }
+        return bundleApiClient.sendUserOperation(op.getBlockchain(), op, op.getEntryPointAddress());
     }
 }

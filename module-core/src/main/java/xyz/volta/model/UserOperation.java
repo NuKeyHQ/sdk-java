@@ -1,6 +1,7 @@
 package xyz.volta.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.web3j.protocol.core.methods.response.AbiDefinition;
 import xyz.volta.consts.Blockchain;
 
 import java.math.BigInteger;
@@ -67,6 +68,75 @@ public class UserOperation {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public Builder copyToBuilder() {
+        return new Builder()
+                .setSender(sender)
+                .setNonce(nonce)
+                .setInitCode(initCode)
+                .setCallData(callData)
+                .setCallGasLimit(callGasLimit)
+                .setVerificationGasLimit(verificationGasLimit)
+                .setPreVerificationGas(preVerificationGas)
+                .setMaxFeePerGas(maxFeePerGas)
+                .setMaxPriorityFeePerGas(maxPriorityFeePerGas)
+                .setPaymasterAndData(paymasterAndData)
+                .setSignature(signature)
+                .setEntryPointAddress(entryPointAddress)
+                .setBlockchain(blockchain);
+    }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public BigInteger getNonce() {
+        return nonce;
+    }
+
+    public String getInitCode() {
+        return initCode;
+    }
+
+    public String getCallData() {
+        return callData;
+    }
+
+    public BigInteger getCallGasLimit() {
+        return callGasLimit;
+    }
+
+    public BigInteger getVerificationGasLimit() {
+        return verificationGasLimit;
+    }
+
+    public BigInteger getPreVerificationGas() {
+        return preVerificationGas;
+    }
+
+    public BigInteger getMaxFeePerGas() {
+        return maxFeePerGas;
+    }
+
+    public BigInteger getMaxPriorityFeePerGas() {
+        return maxPriorityFeePerGas;
+    }
+
+    public String getPaymasterAndData() {
+        return paymasterAndData;
+    }
+
+    public String getSignature() {
+        return signature;
+    }
+
+    public String getEntryPointAddress() {
+        return entryPointAddress;
+    }
+
+    public Blockchain getBlockchain() {
+        return blockchain;
     }
 
     public static class Builder {

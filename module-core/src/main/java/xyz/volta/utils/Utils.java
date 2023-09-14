@@ -22,4 +22,8 @@ public class Utils {
                 text.length() >= 2 &&
                 (text.startsWith("0x") || text.startsWith("0X"));
     }
+
+    public static boolean isNullOrBlank(String text) {
+        return text == null || text.isBlank();
+    }
 }

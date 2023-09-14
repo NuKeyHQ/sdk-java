@@ -6,4 +6,5 @@ import xyz.volta.model.UserOperation;
 
 public interface VoltaSessionKeyClient {
     Single<UserOperation> buildUserOperation(BuildUserOperationParams params);
+    Single<String> sendUserOperation(UserOperation userOperation);
 }
