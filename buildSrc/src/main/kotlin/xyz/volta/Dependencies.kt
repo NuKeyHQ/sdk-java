@@ -3,12 +3,12 @@ package xyz.volta
 object Dependencies {
 
   object Web3j {
-    const val CORE = "org.web3j:core:4.10.0"
-    const val EVM = "org.web3j:web3j-evm:4.10.0"
+    const val core = "org.web3j:core:4.10.0"
+    const val evm = "org.web3j:web3j-evm:4.10.0"
   }
 
   object Modules {
-    const val SDK = ":module-core"
+    const val sdk = ":module-core"
   }
 
   object Libs {

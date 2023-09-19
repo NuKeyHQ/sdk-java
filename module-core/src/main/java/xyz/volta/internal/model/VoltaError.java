@@ -1,14 +1,14 @@
 package xyz.volta.internal.model;
 
 public class VoltaError {
-    private int code;
-    private String message;
+  private int code;
+  private String message;
 
-    public int getCode() {
-        return code;
-    }
+  public int getCode() {
+    return code;
+  }
 
-    public String getMessage() {
-        return message;
-    }
+  public String getMessage() {
+    return message;
+  }
 }
