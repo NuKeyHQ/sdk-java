@@ -1,14 +1,14 @@
 package xyz.volta.internal;
 
 import io.reactivex.Single;
-import xyz.volta.VoltaSessionKeyClient;
+import xyz.volta.VoltaClient;
 import xyz.volta.constant.Blockchain;
 import xyz.volta.model.UserOperation;
 import xyz.volta.utils.Utils;
 
 import java.math.BigInteger;
 
-class VoltaSessionKeyClientImpl implements VoltaSessionKeyClient {
+class DefaultVoltaClient implements VoltaClient {
 
   private static final String ERR_INVALID_SENDER_ADDRESS = "invalid Sender address";
   private static final String ERR_INVALID_CALL_DATA = "invalid call data";
@@ -20,29 +20,29 @@ class VoltaSessionKeyClientImpl implements VoltaSessionKeyClient {
   private static final String ERR_INVALID_MAX_FEE_PER_GAS = "invalid max fee per gas";
   private static final String ERR_INVALID_MAX_PRIORITY_FEE_PER_GAS = "invalid max priority fee per gas";
 
-  private final BundleApiClient bundleApiClient;
+  private final BundleClient bundleClient;
 
-  VoltaSessionKeyClientImpl(BundleApiClient bundleApiClient) {
-    this.bundleApiClient = bundleApiClient;
+  DefaultVoltaClient(BundleClient bundleClient) {
+    this.bundleClient = bundleClient;
   }
 
   @Override
-  public Single<UserOperation> buildUserOperation(UserOperation params) {
-    String errorMsg = validateParams(params);
-    if (errorMsg != null) {
-      return Single.error(new IllegalArgumentException(errorMsg));
+  public Single<UserOperation> buildUserOperation(UserOperation operation) {
+    String error = validateParams(operation);
+    if (error != null) {
+      return Single.error(new IllegalArgumentException(error));
     }
-    String entryPointAddress = params.getEntryPointAddress();
-    if (entryPointAddress == null || entryPointAddress.isBlank()) {
-      entryPointAddress = Blockchain.defaultEntryPointAddress();
+    String address = operation.getEntryPointAddress();
+    if (address == null || address.isBlank()) {
+      address = Blockchain.defaultEntryPointAddress();
     }
 
     // TODO: get nonce
-    UserOperation userOperation = params.copyToBuilder()
-      .setEntryPointAddress(entryPointAddress)
+    UserOperation userOperation = operation.copyToBuilder()
+      .setEntryPointAddress(address)
       .build();
 
-    return bundleApiClient.estimateUserOperationGas(params.getBlockchain(), userOperation, entryPointAddress)
+    return bundleClient.estimateUserOperationGas(operation.getBlockchain(), userOperation, address)
       .map(it -> userOperation.copyToBuilder()
         .setPreVerificationGas(it.getPreVerificationGas())
         .setVerificationGasLimit(it.getVerificationGas())
@@ -87,20 +87,20 @@ class VoltaSessionKeyClientImpl implements VoltaSessionKeyClient {
   }
 
   @Override
-  public Single<String> sendUserOperation(UserOperation op) {
+  public Single<String> sendUserOperation(UserOperation operation) {
     String error = null;
-    if (op == null) {
+    if (operation == null) {
       error = "Input param is null";
-    } else if (op.getBlockchain() == null) {
+    } else if (operation.getBlockchain() == null) {
       error = "Blockchain param must be not null";
-    } else if (!Utils.isHexAddress(op.getEntryPointAddress())) {
+    } else if (!Utils.isHexAddress(operation.getEntryPointAddress())) {
       error = "Invalid entry point address";
-    } else if (Utils.isNullOrBlank(op.getSignature())) {
+    } else if (Utils.isNullOrBlank(operation.getSignature())) {
       error = "User operation must be signed before sending";
     }
     if (error != null) {
       return Single.error(new IllegalArgumentException(error));
     }
-    return bundleApiClient.sendUserOperation(op.getBlockchain(), op, op.getEntryPointAddress());
+    return bundleClient.sendUserOperation(operation.getBlockchain(), operation, operation.getEntryPointAddress());
   }
 }

@@ -14,7 +14,7 @@ import xyz.volta.utils.Utils;
 
 import java.util.List;
 
-class BundleApiClientImpl implements BundleApiClient {
+class DefaultBundleClient implements BundleClient {
 
   private final ObjectMapper objectMapper;
 
@@ -22,15 +22,23 @@ class BundleApiClientImpl implements BundleApiClient {
 
   private final String bundleServiceUrl;
 
-  BundleApiClientImpl(ObjectMapper objectMapper, OkHttpClient client, String bundleServiceUrl) {
+  DefaultBundleClient(
+    ObjectMapper objectMapper,
+    OkHttpClient client,
+    String bundleServiceUrl
+  ) {
     this.objectMapper = objectMapper;
     this.client = client;
     this.bundleServiceUrl = bundleServiceUrl;
   }
 
   @Override
-  public Single<EstimateFeeResponse> estimateUserOperationGas(Blockchain blockchain, UserOperation userOperation, String entryPoint) {
-    return doJSONRPCRequest(blockchain, "eth_estimateUserOperationGas", List.of(userOperation, entryPoint))
+  public Single<EstimateFeeResponse> estimateUserOperationGas(
+    Blockchain blockchain,
+    UserOperation operation,
+    String entryPoint
+  ) {
+    return jsonRpc(blockchain, "eth_estimateUserOperationGas", List.of(operation, entryPoint))
       .map(response -> {
         JsonRpcMessage<EstimateFeeResponse> result = objectMapper.readValue(response, new TypeReference<>() {
         });
@@ -44,8 +52,12 @@ class BundleApiClientImpl implements BundleApiClient {
   }
 
   @Override
-  public Single<String> sendUserOperation(Blockchain blockchain, UserOperation userOp, String entryPoint) {
-    return doJSONRPCRequest(blockchain, "eth_sendUserOperation", List.of(userOp, entryPoint))
+  public Single<String> sendUserOperation(
+    Blockchain blockchain,
+    UserOperation operation,
+    String entryPoint
+  ) {
+    return jsonRpc(blockchain, "eth_sendUserOperation", List.of(operation, entryPoint))
       .map(response -> {
         JsonRpcMessage<String> result = objectMapper.readValue(response, new TypeReference<>() {
         });
@@ -58,7 +70,7 @@ class BundleApiClientImpl implements BundleApiClient {
       });
   }
 
-  private Single<String> doJSONRPCRequest(Blockchain blockchain, String method, Object params) {
+  private Single<String> jsonRpc(Blockchain blockchain, String method, Object params) {
     return Single.create(emitter -> {
       String url = getUrl(blockchain);
       if (Utils.isNullOrBlank(url)) {
