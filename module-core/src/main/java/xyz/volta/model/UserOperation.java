@@ -15,7 +15,7 @@ import org.web3j.utils.Numeric;
 import xyz.volta.constant.Blockchain;
 import xyz.volta.internal.jackson.BigIntHexDeserialize;
 import xyz.volta.internal.jackson.BigIntHexSerialize;
-import xyz.volta.utility.Utils;
+import xyz.volta.utility.Utility;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -206,7 +206,7 @@ public class UserOperation {
   }
 
   public String getEntryPointAddress() {
-    return Utils.isHexAddress(entryPointAddress) ? entryPointAddress : Blockchain.defaultEntryPointAddress();
+    return Utility.isHexAddress(entryPointAddress) ? entryPointAddress : Blockchain.defaultEntryPointAddress();
   }
 
   public Blockchain getBlockchain() {

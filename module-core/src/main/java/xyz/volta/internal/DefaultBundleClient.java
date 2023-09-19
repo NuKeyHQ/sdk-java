@@ -10,7 +10,7 @@ import xyz.volta.internal.model.EstimateFeeResponse;
 import xyz.volta.internal.model.JsonRpcMessage;
 import xyz.volta.internal.model.VoltaError;
 import xyz.volta.model.UserOperation;
-import xyz.volta.utility.Utils;
+import xyz.volta.utility.Utility;
 
 import java.util.List;
 
@@ -73,7 +73,7 @@ class DefaultBundleClient implements BundleClient {
   private Single<String> jsonRpc(Blockchain blockchain, String method, Object params) {
     return Single.create(emitter -> {
       String url = getUrl(blockchain);
-      if (Utils.isNullOrBlank(url)) {
+      if (Utility.isNullOrBlank(url)) {
         emitter.onError(new IllegalArgumentException(String.format("no url for blockchain %s", blockchain)));
         return;
       }

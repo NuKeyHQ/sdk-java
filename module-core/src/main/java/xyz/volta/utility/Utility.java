@@ -1,6 +1,6 @@
 package xyz.volta.utility;
 
-public class Utils {
+public class Utility {
 
   private static final int ADDRESS_BYTE_SIZE = 20;
 

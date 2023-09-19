@@ -4,7 +4,7 @@ import io.reactivex.Single;
 import xyz.volta.VoltaClient;
 import xyz.volta.constant.Blockchain;
 import xyz.volta.model.UserOperation;
-import xyz.volta.utility.Utils;
+import xyz.volta.utility.Utility;
 
 import java.math.BigInteger;
 
@@ -51,18 +51,18 @@ class DefaultVoltaClient implements VoltaClient {
   }
 
   private String validateParams(UserOperation params) {
-    if (!Utils.isHexAddress(params.getSender())) {
+    if (!Utility.isHexAddress(params.getSender())) {
       return ERR_INVALID_SENDER_ADDRESS;
     }
 
-    if (!Utils.isHexData(params.getCallData())) {
+    if (!Utility.isHexData(params.getCallData())) {
       return ERR_INVALID_CALL_DATA;
     }
 
     if (params.getBlockchain() == null) {
       return ERR_INVALID_BLOCKCHAIN;
     }
-    if (params.getEntryPointAddress() != null && !params.getEntryPointAddress().isBlank() && !Utils.isHexAddress(params.getEntryPointAddress())) {
+    if (params.getEntryPointAddress() != null && !params.getEntryPointAddress().isBlank() && !Utility.isHexAddress(params.getEntryPointAddress())) {
       return ERR_INVALID_ENTRY_POINT_ADDRESS;
     }
 
@@ -93,9 +93,9 @@ class DefaultVoltaClient implements VoltaClient {
       error = "Input param is null";
     } else if (operation.getBlockchain() == null) {
       error = "Blockchain param must be not null";
-    } else if (!Utils.isHexAddress(operation.getEntryPointAddress())) {
+    } else if (!Utility.isHexAddress(operation.getEntryPointAddress())) {
       error = "Invalid entry point address";
-    } else if (Utils.isNullOrBlank(operation.getSignature())) {
+    } else if (Utility.isNullOrBlank(operation.getSignature())) {
       error = "User operation must be signed before sending";
     }
     if (error != null) {
