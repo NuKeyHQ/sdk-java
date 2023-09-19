@@ -15,5 +15,6 @@ pluginManagement {
 rootProject.name = "sdk-java"
 
 include(
-  "module-core"
+  "module-core",
+  "example"
 )
