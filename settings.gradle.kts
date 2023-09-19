@@ -15,5 +15,5 @@ rootProject.name = "sdk-java"
 
 include(
   "module-core",
-  "example"
+  "module-example"
 )

@@ -1,7 +1,6 @@
 import xyz.volta.Dependencies
 
 plugins {
-  id("org.jetbrains.kotlin.jvm")
   id("io.github.gradle-nexus.publish-plugin")
 }
 
@@ -33,17 +32,8 @@ subprojects { p ->
   }
 
   java {
-    toolchain {
-      languageVersion = JavaLanguageVersion.of(17)
-    }
     withJavadocJar()
     withSourcesJar()
-  }
-
-  kotlin {
-    jvmToolchain {
-      languageVersion.set(JavaLanguageVersion.of(17))
-    }
   }
 
   dependencies {
