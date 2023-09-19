@@ -1,10 +1,10 @@
 package xyz.volta;
 
-import xyz.volta.internal.InternalProviders;
+import xyz.volta.internal.VoltaFactory;
 
 public class VoltaSdk {
 
   public static synchronized VoltaClient clientFor(String bundleServiceUrl) {
-    return InternalProviders.provideVoltaSessionKeyClient(bundleServiceUrl);
+    return VoltaFactory.provideVoltaClient(bundleServiceUrl);
   }
 }
