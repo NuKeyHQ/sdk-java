@@ -10,7 +10,7 @@ import xyz.volta.internal.model.EstimateFeeResponse;
 import xyz.volta.internal.model.JsonRpcMessage;
 import xyz.volta.internal.model.VoltaError;
 import xyz.volta.model.UserOperation;
-import xyz.volta.utils.Utils;
+import xyz.volta.utility.Utils;
 
 import java.util.List;
 

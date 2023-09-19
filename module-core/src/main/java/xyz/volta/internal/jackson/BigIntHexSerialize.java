@@ -1,4 +1,4 @@
-package xyz.volta.json;
+package xyz.volta.internal.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;

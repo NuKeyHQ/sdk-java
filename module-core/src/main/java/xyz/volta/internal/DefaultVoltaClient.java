@@ -4,7 +4,7 @@ import io.reactivex.Single;
 import xyz.volta.VoltaClient;
 import xyz.volta.constant.Blockchain;
 import xyz.volta.model.UserOperation;
-import xyz.volta.utils.Utils;
+import xyz.volta.utility.Utils;
 
 import java.math.BigInteger;
 

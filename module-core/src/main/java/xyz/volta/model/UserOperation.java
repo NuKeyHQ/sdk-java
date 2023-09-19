@@ -13,9 +13,9 @@ import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
 import xyz.volta.constant.Blockchain;
-import xyz.volta.json.BigIntHexDeserialize;
-import xyz.volta.json.BigIntHexSerialize;
-import xyz.volta.utils.Utils;
+import xyz.volta.internal.jackson.BigIntHexDeserialize;
+import xyz.volta.internal.jackson.BigIntHexSerialize;
+import xyz.volta.utility.Utils;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;

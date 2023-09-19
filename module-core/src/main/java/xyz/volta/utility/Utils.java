@@ -1,4 +1,4 @@
-package xyz.volta.utils;
+package xyz.volta.utility;
 
 public class Utils {
 
