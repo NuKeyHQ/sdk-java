@@ -2,7 +2,8 @@ package xyz.volta.consts;
 
 public enum Blockchain {
     ETHEREUM_MAINNET("ethereum-mainnet", 1),
-    ETHEREUM_GOERLI("ethereum-goerli", 5);
+    ETHEREUM_GOERLI("ethereum-goerli", 5),
+    POLYGON_MUMBAI("polygon-mumbai", 80001);
     private final String chainName;
     private final int chainId;
     Blockchain(String chainName, int chainId) {

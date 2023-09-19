@@ -1,16 +1,32 @@
 package xyz.volta.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.web3j.protocol.core.methods.response.AbiDefinition;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.web3j.abi.TypeEncoder;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.DynamicStruct;
+import org.web3j.abi.datatypes.generated.Bytes32;
+import org.web3j.abi.datatypes.generated.Uint256;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.Hash;
+import org.web3j.crypto.Sign;
+import org.web3j.utils.Numeric;
 import xyz.volta.consts.Blockchain;
+import xyz.volta.json.BigIntHexDeserialize;
+import xyz.volta.json.BigIntHexSerialize;
+import xyz.volta.utils.Utils;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 
 public class UserOperation {
     private String sender;
     /**
      * Comes from the EntryPoint contract
      */
+    @JsonDeserialize(using = BigIntHexDeserialize.class)
+    @JsonSerialize(using = BigIntHexSerialize.class)
     private BigInteger nonce;
     /**
      * This is for creating a new wallet. SDK will not support this yet.
@@ -20,16 +36,26 @@ public class UserOperation {
     /**
      * Gas allocated for execution step in handleOps
      */
+    @JsonDeserialize(using = BigIntHexDeserialize.class)
+    @JsonSerialize(using = BigIntHexSerialize.class)
     private BigInteger callGasLimit;
     /**
      * Gas allocated for verification step in handleOps
      */
+    @JsonDeserialize(using = BigIntHexDeserialize.class)
+    @JsonSerialize(using = BigIntHexSerialize.class)
     private BigInteger verificationGasLimit;
     /**
      * Gas allocated for other overhead in handleOps (and fee paid to bundler?)
      */
+    @JsonDeserialize(using = BigIntHexDeserialize.class)
+    @JsonSerialize(using = BigIntHexSerialize.class)
     private BigInteger preVerificationGas;
+    @JsonDeserialize(using = BigIntHexDeserialize.class)
+    @JsonSerialize(using = BigIntHexSerialize.class)
     private BigInteger maxFeePerGas;
+    @JsonDeserialize(using = BigIntHexDeserialize.class)
+    @JsonSerialize(using = BigIntHexSerialize.class)
     private BigInteger maxPriorityFeePerGas;
     private String paymasterAndData;
     private String signature;
@@ -37,6 +63,9 @@ public class UserOperation {
     private String entryPointAddress;
     @JsonIgnore
     private Blockchain blockchain;
+
+    public UserOperation() {
+    }
 
     private UserOperation(String sender,
                           BigInteger nonce,
@@ -68,6 +97,51 @@ public class UserOperation {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public String sign(String... privateKeys) {
+        if (privateKeys == null || privateKeys.length == 0) throw new IllegalArgumentException("No Private key is set");
+        String usrOpHash = getUserOperationHash();
+        String message = Numeric.toHexString("\u0019Ethereum Signed Message:\n32".getBytes(StandardCharsets.UTF_8));
+        String digest = Hash.sha3(message + Numeric.cleanHexPrefix(usrOpHash));
+
+        StringBuilder signatureBuilder = new StringBuilder("0x");
+        for (String privateKey : privateKeys) {
+            Credentials credentials = Credentials.create(privateKey);
+            Sign.SignatureData sig = Sign.signMessage(Numeric.hexStringToByteArray(digest), credentials.getEcKeyPair(), false);
+            signatureBuilder.append(Numeric.cleanHexPrefix(Numeric.toHexString(sig.getR())));
+            signatureBuilder.append(Numeric.cleanHexPrefix(Numeric.toHexString(sig.getS())));
+            signatureBuilder.append(Numeric.cleanHexPrefix(Numeric.toHexString(sig.getV())));
+        }
+        signature = signatureBuilder.toString();
+        return signature;
+    }
+
+    private String getUserOperationHash() {
+        String packedData = packedForSignature();
+        String hash = Hash.sha3(packedData);
+        DynamicStruct packedStruct = new DynamicStruct(
+                new Bytes32(Numeric.hexStringToByteArray(hash)),
+                new Address(getEntryPointAddress()),
+                new Uint256(blockchain.getChainId())
+        );
+        return Hash.sha3(TypeEncoder.encode(packedStruct));
+    }
+
+    private String packedForSignature() {
+        DynamicStruct struct = new DynamicStruct(
+                new Address(sender),
+                new Uint256(nonce),
+                new Bytes32(Hash.sha3(Numeric.hexStringToByteArray(initCode))),
+                new Bytes32(Hash.sha3(Numeric.hexStringToByteArray(callData))),
+                new Uint256(callGasLimit),
+                new Uint256(verificationGasLimit),
+                new Uint256(preVerificationGas),
+                new Uint256(maxFeePerGas),
+                new Uint256(maxPriorityFeePerGas),
+                new Bytes32(Hash.sha3(Numeric.hexStringToByteArray(paymasterAndData)))
+        );
+        return TypeEncoder.encode(struct);
     }
 
     public Builder copyToBuilder() {
@@ -132,7 +206,7 @@ public class UserOperation {
     }
 
     public String getEntryPointAddress() {
-        return entryPointAddress;
+        return Utils.isHexAddress(entryPointAddress) ? entryPointAddress : Blockchain.defaultEntryPointAddress();
     }
 
     public Blockchain getBlockchain() {

@@ -1,11 +1,11 @@
 package xyz.volta.internal.model;
 
-public class JsonRpcMessage {
+public class JsonRpcMessage<R> {
     private String jsonrpc;
     private String method;
     private Object params;
-    private byte[] result;
-    private byte[] error;
+    private R result;
+    private VoltaError error;
     private int id;
 
     public JsonRpcMessage(String jsonrpc, String method, Object params, int id) {
@@ -13,6 +13,9 @@ public class JsonRpcMessage {
         this.method = method;
         this.params = params;
         this.id = id;
+    }
+
+    public JsonRpcMessage() {
     }
 
     public String getJsonrpc() {
@@ -27,11 +30,11 @@ public class JsonRpcMessage {
         return params;
     }
 
-    public byte[] getResult() {
+    public R getResult() {
         return result;
     }
 
-    public byte[] getError() {
+    public VoltaError getError() {
         return error;
     }
 

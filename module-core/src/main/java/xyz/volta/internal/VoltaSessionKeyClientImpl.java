@@ -3,7 +3,6 @@ package xyz.volta.internal;
 import io.reactivex.Single;
 import xyz.volta.VoltaSessionKeyClient;
 import xyz.volta.consts.Blockchain;
-import xyz.volta.model.BuildUserOperationParams;
 import xyz.volta.model.UserOperation;
 import xyz.volta.utils.Utils;
 
@@ -28,7 +27,7 @@ class VoltaSessionKeyClientImpl implements VoltaSessionKeyClient {
     }
 
     @Override
-    public Single<UserOperation> buildUserOperation(BuildUserOperationParams params) {
+    public Single<UserOperation> buildUserOperation(UserOperation params) {
         String errorMsg = validateParams(params);
         if (errorMsg != null) {
             return Single.error(new IllegalArgumentException(errorMsg));
@@ -38,11 +37,8 @@ class VoltaSessionKeyClientImpl implements VoltaSessionKeyClient {
             entryPointAddress = Blockchain.defaultEntryPointAddress();
         }
 
-        // TODO: get nonce and estimate user operation gas
-        UserOperation userOperation = UserOperation.builder()
-                .setSender(params.getSender())
-                .setCallData(params.getCallData())
-                .setBlockchain(params.getBlockchain())
+        // TODO: get nonce
+        UserOperation userOperation = params.copyToBuilder()
                 .setEntryPointAddress(entryPointAddress)
                 .build();
 
@@ -54,7 +50,7 @@ class VoltaSessionKeyClientImpl implements VoltaSessionKeyClient {
                         .build());
     }
 
-    private String validateParams(BuildUserOperationParams params) {
+    private String validateParams(UserOperation params) {
         if (!Utils.isHexAddress(params.getSender())) {
             return ERR_INVALID_SENDER_ADDRESS;
         }

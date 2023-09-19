@@ -9,6 +9,8 @@ public class EstimateFeeResponse {
     private BigInteger verificationGas;
     private BigInteger callGasLimit;
 
+    private BigInteger verificationGasLimit;
+
     public BigInteger getPreVerificationGas() {
         return preVerificationGas;
     }
@@ -19,5 +21,9 @@ public class EstimateFeeResponse {
 
     public BigInteger getCallGasLimit() {
         return callGasLimit;
+    }
+
+    public BigInteger getVerificationGasLimit() {
+        return verificationGasLimit;
     }
 }
