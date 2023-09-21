@@ -56,10 +56,10 @@ public class Main {
   }
 
   public static void main(String[] args) throws Exception {
-    VoltaClient client = VoltaSdk.clientFor(BUNDLE_SERVICE_URL);
+    VoltaClient client = VoltaSdk.newVoltaClient(BUNDLE_SERVICE_URL);
     final UserOperation operation = userOperations().copyToBuilder().setBlockchain(Blockchain.POLYGON_MUMBAI).build();
     operation.sign(PRIVATE_KEY_1, PRIVATE_KEY_2);
-    final Object result = client.sendUserOperation(operation);
+    final Object result = client.send(operation);
     System.out.println("Send user operation success: " + result);
   }
 }

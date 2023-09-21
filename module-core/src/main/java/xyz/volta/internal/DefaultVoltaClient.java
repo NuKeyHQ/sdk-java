@@ -70,7 +70,7 @@ final class DefaultVoltaClient implements VoltaClient {
   }
 
   @Override
-  public UserOperation buildUserOperation(final UserOperation operation) throws VoltaException {
+  public UserOperation build(final UserOperation operation) throws VoltaException {
     String error = validate(operation);
     if (error != null) {
       throw new VoltaException(error);
@@ -102,7 +102,7 @@ final class DefaultVoltaClient implements VoltaClient {
   }
 
   @Override
-  public Object sendUserOperation(final UserOperation operation) throws VoltaException {
+  public Object send(final UserOperation operation) throws VoltaException {
     final String error;
     if (operation == null) {
       error = "Input param is null";
