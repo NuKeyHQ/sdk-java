@@ -1,31 +1,27 @@
 package xyz.volta.internal;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.reactivex.Single;
 import okhttp3.*;
 import xyz.volta.constant.Blockchain;
-import xyz.volta.exception.VoltaException;
 import xyz.volta.internal.model.EstimateFeeResponse;
 import xyz.volta.internal.model.JsonRpcMessage;
-import xyz.volta.internal.model.VoltaError;
 import xyz.volta.model.UserOperation;
 import xyz.volta.utility.Utility;
 
+import java.io.IOException;
 import java.util.List;
 
 class DefaultBundleClient implements BundleClient {
 
+  private static final MediaType JSON_MEDIA_TYPE = MediaType.get("application/json; charset=utf-8");
   private final ObjectMapper objectMapper;
-
   private final OkHttpClient client;
-
   private final String bundleServiceUrl;
 
   DefaultBundleClient(
-    ObjectMapper objectMapper,
-    OkHttpClient client,
-    String bundleServiceUrl
+    final ObjectMapper objectMapper,
+    final OkHttpClient client,
+    final String bundleServiceUrl
   ) {
     this.objectMapper = objectMapper;
     this.client = client;
@@ -33,68 +29,58 @@ class DefaultBundleClient implements BundleClient {
   }
 
   @Override
-  public Single<EstimateFeeResponse> estimateUserOperationGas(
-    Blockchain blockchain,
-    UserOperation operation,
-    String entryPoint
-  ) {
-    return jsonRpc(blockchain, "eth_estimateUserOperationGas", List.of(operation, entryPoint))
-      .map(response -> {
-        JsonRpcMessage<EstimateFeeResponse> result = objectMapper.readValue(response, new TypeReference<>() {
-        });
-        VoltaError error = result.getError();
-        if (error != null) {
-          throw new VoltaException(error.getMessage(), error.getCode());
-        } else {
-          return result.getResult();
-        }
-      });
+  public EstimateFeeResponse estimateUserOperationGas(
+    final Blockchain blockchain,
+    final UserOperation operation,
+    final String entryPoint
+  ) throws IOException {
+    return execute(
+      blockchain,
+      "eth_estimateUserOperationGas",
+      List.of(operation, entryPoint),
+      EstimateFeeResponse.class
+    );
   }
 
   @Override
-  public Single<String> sendUserOperation(
-    Blockchain blockchain,
-    UserOperation operation,
-    String entryPoint
-  ) {
-    return jsonRpc(blockchain, "eth_sendUserOperation", List.of(operation, entryPoint))
-      .map(response -> {
-        JsonRpcMessage<String> result = objectMapper.readValue(response, new TypeReference<>() {
-        });
-        VoltaError error = result.getError();
-        if (error != null) {
-          throw new VoltaException(error.getMessage(), error.getCode());
+  public Object sendUserOperation(
+    final Blockchain blockchain,
+    final UserOperation operation,
+    final String entryPoint
+  ) throws IOException {
+    return execute(blockchain, "eth_sendUserOperation", List.of(operation, entryPoint), Object.class);
+  }
+
+  private <T> T execute(Blockchain blockchain, String method, Object params, Class<T> type) throws IOException {
+    final String url = urlFor(blockchain);
+    if (Utility.isNullOrBlank(url)) {
+      throw new IllegalArgumentException(String.format("no url for blockchain %s", blockchain));
+    }
+    final JsonRpcMessage<Object> message = new JsonRpcMessage<>(
+      "2.0",
+      method,
+      params,
+      1
+    );
+    final Request request = new Request.Builder()
+      .url(url)
+      .post(RequestBody.create(objectMapper.writeValueAsString(message), JSON_MEDIA_TYPE))
+      .build();
+    try (Response response = client.newCall(request).execute()) {
+      final ResponseBody body = response.body();
+      if (response.isSuccessful()) {
+        if (body == null) {
+          return null;
         } else {
-          return result.getResult();
+          return objectMapper.readValue(body.string(), type);
         }
-      });
-  }
-
-  private Single<String> jsonRpc(Blockchain blockchain, String method, Object params) {
-    return Single.create(emitter -> {
-      String url = getUrl(blockchain);
-      if (Utility.isNullOrBlank(url)) {
-        emitter.onError(new IllegalArgumentException(String.format("no url for blockchain %s", blockchain)));
-        return;
+      } else {
+        throw new IOException("Failed to execute request: " + response);
       }
-      JsonRpcMessage<Object> request = new JsonRpcMessage<>(
-        "2.0",
-        method,
-        params,
-        1
-      );
-      RequestBody body = RequestBody.create(objectMapper.writeValueAsString(request), MediaType.get("application/json; charset=utf-8"));
-      Request httpRequest = new Request.Builder()
-        .url(url)
-        .post(body)
-        .build();
-      Response httpResponse = client.newCall(httpRequest).execute();
-      emitter.onSuccess(httpResponse.body().string());
-    });
+    }
   }
 
-  private String getUrl(Blockchain blockchain) {
-    // TODO: return bundle url by blockchain
+  private String urlFor(Blockchain blockchain) {
     return bundleServiceUrl;
   }
 }

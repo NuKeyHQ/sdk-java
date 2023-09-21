@@ -67,19 +67,21 @@ public class UserOperation {
   public UserOperation() {
   }
 
-  private UserOperation(String sender,
-                        BigInteger nonce,
-                        String initCode,
-                        String callData,
-                        BigInteger callGasLimit,
-                        BigInteger verificationGasLimit,
-                        BigInteger preVerificationGas,
-                        BigInteger maxFeePerGas,
-                        BigInteger maxPriorityFeePerGas,
-                        String paymasterAndData,
-                        String signature,
-                        String entryPointAddress,
-                        Blockchain blockchain) {
+  private UserOperation(
+    final String sender,
+    final BigInteger nonce,
+    final String initCode,
+    final String callData,
+    final BigInteger callGasLimit,
+    final BigInteger verificationGasLimit,
+    final BigInteger preVerificationGas,
+    final BigInteger maxFeePerGas,
+    final BigInteger maxPriorityFeePerGas,
+    final String paymasterAndData,
+    final String signature,
+    final String entryPointAddress,
+    final Blockchain blockchain
+  ) {
     this.sender = sender;
     this.nonce = nonce;
     this.initCode = initCode;
@@ -123,7 +125,7 @@ public class UserOperation {
     DynamicStruct packedStruct = new DynamicStruct(
       new Bytes32(Numeric.hexStringToByteArray(hash)),
       new Address(getEntryPointAddress()),
-      new Uint256(blockchain.getChainId())
+      new Uint256(blockchain.chainId)
     );
     return Hash.sha3(TypeEncoder.encode(packedStruct));
   }
@@ -206,7 +208,7 @@ public class UserOperation {
   }
 
   public String getEntryPointAddress() {
-    return Utility.isHexAddress(entryPointAddress) ? entryPointAddress : Blockchain.defaultEntryPointAddress();
+    return Utility.isHexAddress(entryPointAddress) ? entryPointAddress : Blockchain.DEFAULT_ENTRY_POINT_ADDRESS;
   }
 
   public Blockchain getBlockchain() {
@@ -298,7 +300,8 @@ public class UserOperation {
     }
 
     public UserOperation build() {
-      return new UserOperation(sender,
+      return new UserOperation(
+        sender,
         nonce,
         initCode,
         callData,

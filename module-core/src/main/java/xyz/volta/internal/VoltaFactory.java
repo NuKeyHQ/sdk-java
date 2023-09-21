@@ -18,7 +18,7 @@ public final class VoltaFactory {
    * @param bundleServiceUrl The url of the bundle service
    * @return A singleton instance of {@link VoltaClient}
    */
-  public static VoltaClient provideVoltaClient(String bundleServiceUrl) {
+  public static VoltaClient createVoltaClient(String bundleServiceUrl) {
     if (instance == null) {
       synchronized (VoltaFactory.class) {
         if (instance == null) {

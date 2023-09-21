@@ -3,10 +3,8 @@ package xyz.volta.example;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.reactivex.Single;
-import io.reactivex.SingleOnSubscribe;
-import xyz.volta.VoltaSdk;
 import xyz.volta.VoltaClient;
+import xyz.volta.VoltaSdk;
 import xyz.volta.constant.Blockchain;
 import xyz.volta.model.UserOperation;
 
@@ -43,9 +41,9 @@ public class Main {
 
   private static final String BUNDLE_SERVICE_URL = "https://api.stackup.sh/v1/node/b69c55cba47271e3471c1e8d2c0fb9ddb79dfa4550aabf52c49ce9fbc272c093";
 
-  private static UserOperation getUsrOpFromString() throws JsonProcessingException {
-    ObjectMapper mapper = new ObjectMapper();
-    ObjectNode json = mapper.createObjectNode();
+  private static UserOperation userOperations() throws JsonProcessingException {
+    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectNode json = mapper.createObjectNode();
     Arrays
       .stream(USR_OP_STR.split(",")).map(it -> it.split(":"))
       .forEach(entry -> {
@@ -57,21 +55,11 @@ public class Main {
     return mapper.readValue(json.toPrettyString(), UserOperation.class);
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     VoltaClient client = VoltaSdk.clientFor(BUNDLE_SERVICE_URL);
-    Single
-      .create((SingleOnSubscribe<UserOperation>) emitter -> {
-        UserOperation usrOp = getUsrOpFromString().copyToBuilder().setBlockchain(Blockchain.POLYGON_MUMBAI).build();
-        emitter.onSuccess(usrOp);
-      })
-      .map(usrOp -> {
-        usrOp.sign(PRIVATE_KEY_1, PRIVATE_KEY_2);
-        return usrOp;
-      })
-      .flatMap(client::sendUserOperation)
-      .subscribe(
-        hash -> System.out.println("Send user operation success: " + hash),
-        error -> System.out.println("Failed to send user operation: " + error.getMessage())
-      );
+    final UserOperation operation = userOperations().copyToBuilder().setBlockchain(Blockchain.POLYGON_MUMBAI).build();
+    operation.sign(PRIVATE_KEY_1, PRIVATE_KEY_2);
+    final Object result = client.sendUserOperation(operation);
+    System.out.println("Send user operation success: " + result);
   }
 }

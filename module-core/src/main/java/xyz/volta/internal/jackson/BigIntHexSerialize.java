@@ -10,9 +10,9 @@ import java.math.BigInteger;
 public class BigIntHexSerialize extends JsonSerializer<BigInteger> {
 
   @Override
-  public void serialize(BigInteger value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+  public void serialize(BigInteger value, JsonGenerator generator, SerializerProvider serializer) throws IOException {
     if (value != null) {
-      gen.writeString("0x" + value.toString(16));
+      generator.writeString("0x" + value.toString(16));
     }
   }
 }

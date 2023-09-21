@@ -1,14 +1,8 @@
 package xyz.volta.exception;
 
-public class VoltaException extends Exception {
-  private int code;
+public final class VoltaException extends Exception {
 
-  public VoltaException(String message, int code) {
+  public VoltaException(final String message) {
     super(message);
-    this.code = code;
-  }
-
-  public int getCode() {
-    return code;
   }
 }
