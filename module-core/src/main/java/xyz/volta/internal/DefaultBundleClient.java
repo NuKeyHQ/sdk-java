@@ -1,8 +1,15 @@
 package xyz.volta.internal;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import xyz.volta.constant.Blockchain;
+import xyz.volta.exception.VoltaException;
 import xyz.volta.internal.model.EstimateFeeResponse;
 import xyz.volta.internal.model.JsonRpcMessage;
 import xyz.volta.model.UserOperation;
@@ -33,7 +40,7 @@ class DefaultBundleClient implements BundleClient {
     final Blockchain blockchain,
     final UserOperation operation,
     final String entryPoint
-  ) throws IOException {
+  ) throws IOException, VoltaException {
     return execute(
       blockchain,
       "eth_estimateUserOperationGas",
@@ -43,15 +50,15 @@ class DefaultBundleClient implements BundleClient {
   }
 
   @Override
-  public Object sendUserOperation(
+  public String sendUserOperation(
     final Blockchain blockchain,
     final UserOperation operation,
     final String entryPoint
-  ) throws IOException {
-    return execute(blockchain, "eth_sendUserOperation", List.of(operation, entryPoint), Object.class);
+  ) throws IOException, VoltaException {
+    return execute(blockchain, "eth_sendUserOperation", List.of(operation, entryPoint), String.class);
   }
 
-  private <T> T execute(Blockchain blockchain, String method, Object params, Class<T> type) throws IOException {
+  private <T> T execute(Blockchain blockchain, String method, Object params, Class<T> type) throws IOException, VoltaException {
     final String url = urlFor(blockchain);
     if (Utility.isNullOrBlank(url)) {
       throw new IllegalArgumentException(String.format("no url for blockchain %s", blockchain));
@@ -72,7 +79,13 @@ class DefaultBundleClient implements BundleClient {
         if (body == null) {
           return null;
         } else {
-          return objectMapper.readValue(body.string(), type);
+          JavaType resultType = objectMapper.getTypeFactory().constructParametricType(JsonRpcMessage.class, type);
+          JsonRpcMessage<T> result = objectMapper.readValue(body.string(), resultType);
+          if (result.getError() != null) {
+            throw new VoltaException(result.getError().getMessage());
+          } else {
+            return result.getResult();
+          }
         }
       } else {
         throw new IOException("Failed to execute request: " + response);
