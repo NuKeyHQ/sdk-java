@@ -10,6 +10,6 @@ repositories {
 }
 
 dependencies {
-  implementation("xyz.volta.sdk:1.0.0")
+  implementation("xyz.voltawallet.sdk:1.0.0")
 }
 ```
