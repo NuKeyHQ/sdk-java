@@ -1,8 +1,11 @@
-import xyz.volta.Dependencies
+import xyz.voltawallet.Dependencies
 
 plugins {
   id("io.github.gradle-nexus.publish-plugin")
 }
+
+group = "xyz.voltawallet.sdk-java"
+version = "1.0.0"
 
 repositories {
   mavenCentral()
@@ -24,7 +27,7 @@ subprojects { p ->
   apply(plugin: "maven-publish")
   apply(plugin: "signing")
 
-  group = "xyz.volta"
+  group = "xyz.voltawallet"
   version = "1.0.0"
 
   repositories {
@@ -85,4 +88,3 @@ subprojects { p ->
     sign publishing.publications["mavenJava"]
   }
 }
-
