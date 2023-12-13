@@ -8,14 +8,14 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import xyz.voltawallet.constant.Blockchain;
 import xyz.voltawallet.exception.VoltaException;
+import xyz.voltawallet.internal.model.BlockInfoResponse;
 import xyz.voltawallet.internal.model.EstimateFeeResponse;
 import xyz.voltawallet.internal.model.JsonRpcMessage;
 import xyz.voltawallet.model.UserOperation;
-import xyz.voltawallet.utility.Utility;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.List;
 
 class DefaultBundleClient implements BundleClient {
@@ -37,12 +37,10 @@ class DefaultBundleClient implements BundleClient {
 
   @Override
   public EstimateFeeResponse estimateUserOperationGas(
-    final Blockchain blockchain,
     final UserOperation operation,
     final String entryPoint
   ) throws IOException, VoltaException {
     return execute(
-      blockchain,
       "eth_estimateUserOperationGas",
       List.of(operation, entryPoint),
       EstimateFeeResponse.class
@@ -51,18 +49,28 @@ class DefaultBundleClient implements BundleClient {
 
   @Override
   public String sendUserOperation(
-    final Blockchain blockchain,
     final UserOperation operation,
     final String entryPoint
   ) throws IOException, VoltaException {
-    return execute(blockchain, "eth_sendUserOperation", List.of(operation, entryPoint), String.class);
+    return execute("eth_sendUserOperation", List.of(operation, entryPoint), String.class);
   }
 
-  private <T> T execute(Blockchain blockchain, String method, Object params, Class<T> type) throws IOException, VoltaException {
-    final String url = urlFor(blockchain);
-    if (Utility.isNullOrBlank(url)) {
-      throw new IllegalArgumentException(String.format("no url for blockchain %s", blockchain));
+  @Override
+  public BigInteger suggestGasTipCap() throws IOException, VoltaException {
+    String maxPriorityFeePerGas = execute("eth_maxPriorityFeePerGas", null, String.class);
+    try {
+      return new BigInteger(maxPriorityFeePerGas.replace("0x", ""), 16);
+    } catch (Exception e) {
+      throw new VoltaException("Failed in parse suggestGasTipCap from: " + maxPriorityFeePerGas);
     }
+  }
+
+  @Override
+  public BlockInfoResponse lastBlockInfo() throws IOException, VoltaException {
+    return execute("eth_getBlockByNumber", List.of("latest", false), BlockInfoResponse.class);
+  }
+
+  private <T> T execute(String method, Object params, Class<T> type) throws IOException, VoltaException {
     final JsonRpcMessage<Object> message = new JsonRpcMessage<>(
       "2.0",
       method,
@@ -70,7 +78,7 @@ class DefaultBundleClient implements BundleClient {
       1
     );
     final Request request = new Request.Builder()
-      .url(url)
+      .url(bundleServiceUrl)
       .post(RequestBody.create(objectMapper.writeValueAsString(message), JSON_MEDIA_TYPE))
       .build();
     try (Response response = client.newCall(request).execute()) {
@@ -91,9 +99,5 @@ class DefaultBundleClient implements BundleClient {
         throw new IOException("Failed to execute request: " + response);
       }
     }
-  }
-
-  private String urlFor(Blockchain blockchain) {
-    return bundleServiceUrl;
   }
 }

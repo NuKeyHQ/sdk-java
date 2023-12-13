@@ -87,7 +87,6 @@ final class DefaultVoltaClient implements VoltaClient {
 
     try {
       final EstimateFeeResponse response = bundleClient.estimateUserOperationGas(
-        operation.getBlockchain(),
         userOperation,
         address
       );
@@ -119,7 +118,7 @@ final class DefaultVoltaClient implements VoltaClient {
       throw new VoltaException(error);
     }
     try {
-      return bundleClient.sendUserOperation(operation.getBlockchain(), operation, operation.getEntryPointAddress());
+      return bundleClient.sendUserOperation(operation, operation.getEntryPointAddress());
     } catch (IOException e) {
       throw new VoltaException(e.getMessage());
     }

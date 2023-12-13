@@ -1,6 +1,7 @@
 package xyz.voltawallet;
 
 import xyz.voltawallet.internal.VoltaFactory;
+import xyz.voltawallet.model.ContractAddresses;
 
 public class VoltaSdk {
 
@@ -15,5 +16,9 @@ public class VoltaSdk {
       throw new IllegalArgumentException("Bundle service URL cannot be null or blank");
     }
     return VoltaFactory.createVoltaClient(bundleServiceUrl);
+  }
+
+  public static VaultClient newVaultClient(long chainId, String bundleServiceUrl, ContractAddresses contractAddresses) {
+    return VoltaFactory.createVaultClient(chainId, bundleServiceUrl, contractAddresses);
   }
 }

@@ -1,5 +1,7 @@
 package xyz.voltawallet.utility;
 
+import java.math.BigInteger;
+
 public final class Utility {
 
   private static final int ADDRESS_BYTE_SIZE = 20;
@@ -23,5 +25,13 @@ public final class Utility {
 
   public static boolean isNullOrBlank(String text) {
     return text == null || text.isBlank();
+  }
+
+  public static String toHexNumber(BigInteger number) {
+    if (number != null) {
+      return "0x" + number.toString(16);
+    } else {
+      return "0x";
+    }
   }
 }

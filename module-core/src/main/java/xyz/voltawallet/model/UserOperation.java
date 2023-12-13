@@ -215,19 +215,47 @@ public class UserOperation {
     return blockchain;
   }
 
+  @Override
+  public String toString() {
+    return String.format("""
+        Sender:               %s,
+        Nonce:                %s,
+        InitCode:             %s,
+        CallData:             %s,
+        CallGasLimit:         %s,
+        VerificationGasLimit: %s,
+        PreVerificationGas:   %s,
+        MaxFeePerGas:         %s,
+        MaxPriorityFeePerGas: %s,
+        PaymasterAndData:     %s,
+        Signature:            %s
+        """, sender,
+      Utility.toHexNumber(nonce),
+      initCode,
+      callData,
+      Utility.toHexNumber(callGasLimit),
+      Utility.toHexNumber(verificationGasLimit),
+      Utility.toHexNumber(preVerificationGas),
+      Utility.toHexNumber(maxFeePerGas),
+      Utility.toHexNumber(maxPriorityFeePerGas),
+      paymasterAndData,
+      signature
+    );
+  }
+
   public static class Builder {
 
     private String sender;
     private BigInteger nonce;
-    private String initCode;
-    private String callData;
+    private String initCode = "0x";
+    private String callData = "0x";
     private BigInteger callGasLimit;
     private BigInteger verificationGasLimit;
     private BigInteger preVerificationGas;
     private BigInteger maxFeePerGas;
     private BigInteger maxPriorityFeePerGas;
-    private String paymasterAndData;
-    private String signature;
+    private String paymasterAndData = "0x";
+    private String signature = "0x";
     private String entryPointAddress;
     private Blockchain blockchain;
 
