@@ -8,14 +8,14 @@ import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.ReadonlyTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
-import org.web3j.tx.gas.StaticEIP1559GasProvider;
+import org.web3j.tx.gas.DefaultGasProvider;
 import xyz.voltawallet.VaultClient;
 import xyz.voltawallet.VoltaClient;
 import xyz.voltawallet.contracts.EntryPoint;
 import xyz.voltawallet.contracts.VoltaAccount;
-import xyz.voltawallet.model.ContractAddresses;
+import xyz.voltawallet.model.ContractAddressesConfig;
 
-import java.math.BigInteger;
+import java.io.IOException;
 
 public final class VoltaFactory {
 
@@ -47,26 +47,22 @@ public final class VoltaFactory {
     return instance;
   }
 
-  public static VaultClient createVaultClient(long chainId, String bundleServiceUrl, ContractAddresses contractAddresses) {
+  public static VaultClient createVaultClient(String bundleServiceUrl, ContractAddressesConfig contractAddressesConfig) {
     Web3j web3j = Web3j.build(new HttpService(bundleServiceUrl));
-    TransactionManager transactionManager = new ReadonlyTransactionManager(web3j, contractAddresses.getEntryPoint());
-    ContractGasProvider contractGasProvider = new StaticEIP1559GasProvider(
-      chainId,
-      new BigInteger("39000000000"),
-      new BigInteger("218000000000"),
-      new BigInteger("21000")
-    );
+    TransactionManager transactionManager = new ReadonlyTransactionManager(web3j, contractAddressesConfig.getEntryPoint());
+    ContractGasProvider contractGasProvider = new DefaultGasProvider();
 
     return new DefaultVaultClient(
-      EntryPoint.load(contractAddresses.getEntryPoint(), web3j, transactionManager, contractGasProvider),
-      xyz.voltawallet.contracts.VoltaFactory.load(contractAddresses.getFactory(), web3j, transactionManager, contractGasProvider),
-      VoltaAccount.load(contractAddresses.getFactory(), web3j, transactionManager, contractGasProvider),
+      EntryPoint.load(contractAddressesConfig.getEntryPoint(), web3j, transactionManager, contractGasProvider),
+      xyz.voltawallet.contracts.VoltaFactory.load(contractAddressesConfig.getFactory(), web3j, transactionManager, contractGasProvider),
+      VoltaAccount.load(contractAddressesConfig.getFactory(), web3j, transactionManager, contractGasProvider),
       new DefaultBundleClient(
         JACKSON,
         OKHTTP,
         bundleServiceUrl
       ),
-      contractAddresses
+      contractAddressesConfig,
+      web3j
     );
   }
 }

@@ -2,11 +2,9 @@ package xyz.voltawallet.model;
 
 import xyz.voltawallet.utility.Utility;
 
-import java.util.Objects;
+public class ContractAddressesConfig {
 
-public class ContractAddresses {
-
-  private static final String DEFAULT_ENTRY_POINT_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
+  static final String DEFAULT_ENTRY_POINT_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
 
   private final String factory;
   private final String accountImplementation;
@@ -14,7 +12,7 @@ public class ContractAddresses {
   private final String executorImplementation;
   private final String entryPoint;
 
-  public ContractAddresses(String factory, String accountImplementation, String sessionKeyValidatorImplementation, String executorImplementation, String entryPoint) {
+  public ContractAddressesConfig(String factory, String accountImplementation, String sessionKeyValidatorImplementation, String executorImplementation, String entryPoint) {
     if (!Utility.isHexAddress(factory)) throw new IllegalArgumentException("factory must be a hex address");
     if (!Utility.isHexAddress(accountImplementation)) throw new IllegalArgumentException("accountImplementation must be a hex address");
     if (!Utility.isHexAddress(sessionKeyValidatorImplementation)) throw new IllegalArgumentException("sessionKeyValidatorImplementation must be a hex address");
@@ -27,7 +25,7 @@ public class ContractAddresses {
     this.entryPoint = entryPoint;
   }
 
-  public ContractAddresses(String factory, String accountImplementation, String sessionKeyValidatorImplementation, String executorImplementation) {
+  public ContractAddressesConfig(String factory, String accountImplementation, String sessionKeyValidatorImplementation, String executorImplementation) {
     this(factory, accountImplementation, sessionKeyValidatorImplementation, executorImplementation, null);
   }
 

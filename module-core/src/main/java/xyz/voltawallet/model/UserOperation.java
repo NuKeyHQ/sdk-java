@@ -12,7 +12,6 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
-import xyz.voltawallet.constant.Blockchain;
 import xyz.voltawallet.internal.jackson.BigIntHexDeserialize;
 import xyz.voltawallet.internal.jackson.BigIntHexSerialize;
 import xyz.voltawallet.utility.Utility;
@@ -61,8 +60,7 @@ public class UserOperation {
   private String signature;
   @JsonIgnore
   private String entryPointAddress;
-  @JsonIgnore
-  private Blockchain blockchain;
+  private long chainId;
 
   public UserOperation() {
   }
@@ -80,7 +78,7 @@ public class UserOperation {
     final String paymasterAndData,
     final String signature,
     final String entryPointAddress,
-    final Blockchain blockchain
+    final long chainId
   ) {
     this.sender = sender;
     this.nonce = nonce;
@@ -94,7 +92,7 @@ public class UserOperation {
     this.paymasterAndData = paymasterAndData;
     this.signature = signature;
     this.entryPointAddress = entryPointAddress;
-    this.blockchain = blockchain;
+    this.chainId = chainId;
   }
 
   public static Builder builder() {
@@ -125,7 +123,7 @@ public class UserOperation {
     DynamicStruct packedStruct = new DynamicStruct(
       new Bytes32(Numeric.hexStringToByteArray(hash)),
       new Address(getEntryPointAddress()),
-      new Uint256(blockchain.chainId)
+      new Uint256(chainId)
     );
     return Hash.sha3(TypeEncoder.encode(packedStruct));
   }
@@ -146,7 +144,7 @@ public class UserOperation {
     return TypeEncoder.encode(struct);
   }
 
-  public Builder copyToBuilder() {
+  public Builder buildUpon() {
     return new Builder()
       .setSender(sender)
       .setNonce(nonce)
@@ -160,7 +158,7 @@ public class UserOperation {
       .setPaymasterAndData(paymasterAndData)
       .setSignature(signature)
       .setEntryPointAddress(entryPointAddress)
-      .setBlockchain(blockchain);
+      .setChainId(chainId);
   }
 
   public String getSender() {
@@ -208,11 +206,7 @@ public class UserOperation {
   }
 
   public String getEntryPointAddress() {
-    return Utility.isHexAddress(entryPointAddress) ? entryPointAddress : Blockchain.DEFAULT_ENTRY_POINT_ADDRESS;
-  }
-
-  public Blockchain getBlockchain() {
-    return blockchain;
+    return Utility.isHexAddress(entryPointAddress) ? entryPointAddress : ContractAddressesConfig.DEFAULT_ENTRY_POINT_ADDRESS;
   }
 
   @Override
@@ -228,7 +222,8 @@ public class UserOperation {
         MaxFeePerGas:         %s,
         MaxPriorityFeePerGas: %s,
         PaymasterAndData:     %s,
-        Signature:            %s
+        Signature:            %s,
+        ChainId:              %d
         """, sender,
       Utility.toHexNumber(nonce),
       initCode,
@@ -239,7 +234,8 @@ public class UserOperation {
       Utility.toHexNumber(maxFeePerGas),
       Utility.toHexNumber(maxPriorityFeePerGas),
       paymasterAndData,
-      signature
+      signature,
+      chainId
     );
   }
 
@@ -257,7 +253,7 @@ public class UserOperation {
     private String paymasterAndData = "0x";
     private String signature = "0x";
     private String entryPointAddress;
-    private Blockchain blockchain;
+    private long chainId;
 
     private Builder() {
     }
@@ -322,8 +318,8 @@ public class UserOperation {
       return this;
     }
 
-    public Builder setBlockchain(Blockchain blockchain) {
-      this.blockchain = blockchain;
+    public Builder setChainId(long chainId) {
+      this.chainId = chainId;
       return this;
     }
 
@@ -341,7 +337,7 @@ public class UserOperation {
         paymasterAndData,
         signature,
         entryPointAddress,
-        blockchain
+        chainId
       );
     }
   }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import xyz.voltawallet.VoltaClient;
 import xyz.voltawallet.VoltaSdk;
-import xyz.voltawallet.constant.Blockchain;
 import xyz.voltawallet.model.UserOperation;
 
 import java.util.Arrays;
@@ -57,7 +56,7 @@ public class Main {
     Scanner scanner = new Scanner(System.in);
     VoltaClient client = VoltaSdk.newVoltaClient(BUNDLE_SERVICE_URL);
     String[] privateKeys = scanPrivateKeys(scanner);
-    final UserOperation operation = scanUserOperationInput(scanner).copyToBuilder().setBlockchain(Blockchain.POLYGON_MUMBAI).build();
+    final UserOperation operation = scanUserOperationInput(scanner).buildUpon().setChainId(80001).build();
     System.out.println("Signing and sending the user operation");
     operation.sign(privateKeys);
     final Object result = client.send(operation);

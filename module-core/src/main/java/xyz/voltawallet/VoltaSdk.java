@@ -1,7 +1,7 @@
 package xyz.voltawallet;
 
 import xyz.voltawallet.internal.VoltaFactory;
-import xyz.voltawallet.model.ContractAddresses;
+import xyz.voltawallet.model.ContractAddressesConfig;
 
 public class VoltaSdk {
 
@@ -18,7 +18,7 @@ public class VoltaSdk {
     return VoltaFactory.createVoltaClient(bundleServiceUrl);
   }
 
-  public static VaultClient newVaultClient(long chainId, String bundleServiceUrl, ContractAddresses contractAddresses) {
-    return VoltaFactory.createVaultClient(chainId, bundleServiceUrl, contractAddresses);
+  public static VaultClient newVaultClient(String bundleServiceUrl, ContractAddressesConfig contractAddressesConfig) {
+    return VoltaFactory.createVaultClient(bundleServiceUrl, contractAddressesConfig);
   }
 }

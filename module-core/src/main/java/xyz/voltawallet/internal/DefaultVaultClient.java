@@ -1,5 +1,11 @@
 package xyz.voltawallet.internal;
 
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.utils.Numeric;
 import xyz.voltawallet.VaultClient;
 import xyz.voltawallet.contracts.EntryPoint;
 import xyz.voltawallet.contracts.VoltaAccount;
@@ -7,12 +13,13 @@ import xyz.voltawallet.contracts.VoltaFactory;
 import xyz.voltawallet.exception.VoltaException;
 import xyz.voltawallet.internal.model.EstimateFeeResponse;
 import xyz.voltawallet.model.Call;
-import xyz.voltawallet.model.ContractAddresses;
+import xyz.voltawallet.model.ContractAddressesConfig;
 import xyz.voltawallet.model.UserOperation;
 import xyz.voltawallet.model.Vault;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Locale;
 
 class DefaultVaultClient implements VaultClient {
@@ -21,14 +28,18 @@ class DefaultVaultClient implements VaultClient {
   private final VoltaFactory voltaFactory;
   private final VoltaAccount voltaAccount;
   private final BundleClient bundleClient;
-  private final ContractAddresses contractAddresses;
+  private final ContractAddressesConfig contractAddressesConfig;
+  private final Web3j web3j;
+  private long chainId = -1;
 
-  public DefaultVaultClient(EntryPoint entryPoint, VoltaFactory voltaFactory, VoltaAccount voltaAccount, BundleClient bundleClient, ContractAddresses contractAddresses) {
+  DefaultVaultClient(EntryPoint entryPoint, VoltaFactory voltaFactory, VoltaAccount voltaAccount, BundleClient bundleClient,
+                     ContractAddressesConfig contractAddressesConfig, Web3j web3j) {
     this.entryPoint = entryPoint;
     this.voltaFactory = voltaFactory;
     this.voltaAccount = voltaAccount;
     this.bundleClient = bundleClient;
-    this.contractAddresses = contractAddresses;
+    this.contractAddressesConfig = contractAddressesConfig;
+    this.web3j = web3j;
   }
 
   @Override
@@ -46,12 +57,57 @@ class DefaultVaultClient implements VaultClient {
     return buildUsrOp(vault, callData);
   }
 
-  private UserOperation buildUsrOp(Vault vault, String callData) throws IOException, VoltaException {
-    String sender = getAccountAddress(vault);
-    BigInteger gasTipCap = bundleClient.suggestGasTipCap();
+  @Override
+  public UserOperation buildExecuteUserOpFromTx(Vault vault, Transaction tx) throws IOException, VoltaException {
+    return buildExecuteUserOp(
+      vault,
+      new Call(
+        tx.getTo(),
+        Numeric.decodeQuantity(tx.getValue()),
+        Numeric.hexStringToByteArray(tx.getData())
+      )
+    );
+  }
+
+  @Override
+  public UserOperation buildExecuteBatchUserOp(Vault vault, List<Call> calls) throws IllegalArgumentException, IOException, VoltaException {
+    if (calls == null || calls.isEmpty()) throw new IllegalArgumentException("calls must not be null or empty");
+    List<VoltaAccount.Call> voltaCalls = calls.stream()
+      .map(call -> new VoltaAccount.Call(
+          call.getTarget(),
+          call.getValue(),
+          call.getData()
+        )
+      ).toList();
+    String callData = voltaAccount.executeBatch(voltaCalls).encodeFunctionCall();
+    return buildUsrOp(vault, callData);
+  }
+
+  @Override
+  public UserOperation buildCustomUserOp(Vault vault, byte[] callData) throws IllegalArgumentException, IOException, VoltaException {
+    if (callData == null || callData.length == 0) throw new IllegalArgumentException("callData must not be null or empty");
+    return buildUsrOp(vault, Numeric.toHexString(callData));
+  }
+
+  @Override
+  public UserOperation suggestUserOpGasPrice(UserOperation userOperation) throws IOException {
+    BigInteger gasTipCap = web3j.ethMaxPriorityFeePerGas().send().getMaxPriorityFeePerGas();
     if (gasTipCap.compareTo(BigInteger.ZERO) <= 0) {
       gasTipCap = BigInteger.ONE;
     }
+    EthBlock block = web3j.ethGetBlockByNumber(
+      DefaultBlockParameter.valueOf(DefaultBlockParameterName.LATEST.name()),
+      false
+    ).send();
+    return userOperation.buildUpon()
+      .setMaxPriorityFeePerGas(gasTipCap)
+      .setMaxFeePerGas(gasTipCap.add(block.getBlock().getBaseFeePerGas()))
+      .build();
+  }
+
+  private UserOperation buildUsrOp(Vault vault, String callData) throws IOException, VoltaException {
+    long userOpChainId = getChainId();
+    String sender = getAccountAddress(vault);
     BigInteger nonce = nextNonce(sender);
     String initCode = "0x";
     if (nonce.compareTo(BigInteger.ZERO) == 0) {
@@ -65,12 +121,20 @@ class DefaultVaultClient implements VaultClient {
       .setCallGasLimit(BigInteger.valueOf(1_000_000L))
       .setVerificationGasLimit(BigInteger.valueOf(1054982))
       .setPreVerificationGas(BigInteger.valueOf(700000))
-      .setMaxFeePerGas(gasTipCap.add(getLastBlockBaseFee()))
-      .setMaxPriorityFeePerGas(gasTipCap)
+      .setMaxFeePerGas(BigInteger.TWO)
+      .setMaxPriorityFeePerGas(BigInteger.ONE)
+      .setChainId(userOpChainId)
+      .setEntryPointAddress(contractAddressesConfig.getEntryPoint())
       .build();
+
     try {
-      EstimateFeeResponse feeResponse = bundleClient.estimateUserOperationGas(userOperation, contractAddresses.getEntryPoint());
-      return userOperation.copyToBuilder()
+      userOperation = suggestUserOpGasPrice(userOperation);
+    } catch (Exception ignored) {
+    }
+
+    try {
+      EstimateFeeResponse feeResponse = bundleClient.estimateUserOperationGas(userOperation, contractAddressesConfig.getEntryPoint());
+      return userOperation.buildUpon()
         .setPreVerificationGas(feeResponse.getPreVerificationGas())
         .setVerificationGasLimit(feeResponse.getVerificationGas())
         .setCallGasLimit(feeResponse.getCallGasLimit())
@@ -82,22 +146,22 @@ class DefaultVaultClient implements VaultClient {
 
   private String getInitCode(Vault vault) {
     String createAccountEncoded = voltaFactory.createAccount(
-      contractAddresses.getAccountImplementation(),
-      contractAddresses.getSessionKeyValidatorImplementation(),
-      contractAddresses.getExecutorImplementation(),
+      contractAddressesConfig.getAccountImplementation(),
+      contractAddressesConfig.getSessionKeyValidatorImplementation(),
+      contractAddressesConfig.getExecutorImplementation(),
       vault.getOwners(),
       vault.getThreshold(),
       vault.getSeed()
     ).encodeFunctionCall();
-    return contractAddresses.getFactory().toLowerCase(Locale.ROOT) + createAccountEncoded.replace("0x", "");
+    return contractAddressesConfig.getFactory().toLowerCase(Locale.ROOT) + createAccountEncoded.replace("0x", "");
   }
 
   private String getAccountAddress(Vault vault) throws IOException, VoltaException {
     try {
       return voltaFactory.getAddress(
-        contractAddresses.getAccountImplementation(),
-        contractAddresses.getSessionKeyValidatorImplementation(),
-        contractAddresses.getExecutorImplementation(),
+        contractAddressesConfig.getAccountImplementation(),
+        contractAddressesConfig.getSessionKeyValidatorImplementation(),
+        contractAddressesConfig.getExecutorImplementation(),
         vault.getOwners(),
         vault.getThreshold(),
         vault.getSeed()
@@ -112,11 +176,10 @@ class DefaultVaultClient implements VaultClient {
     }
   }
 
-  private BigInteger getLastBlockBaseFee() {
-    try {
-      return bundleClient.lastBlockInfo().getBaseFeePerGas();
-    } catch (Exception ignored) {
-      return BigInteger.ONE;
+  private long getChainId() throws IOException {
+    if (chainId == -1) {
+      chainId = web3j.ethChainId().send().getChainId().longValue();
     }
+    return chainId;
   }
 }

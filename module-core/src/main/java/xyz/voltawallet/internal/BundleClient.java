@@ -1,12 +1,10 @@
 package xyz.voltawallet.internal;
 
 import xyz.voltawallet.exception.VoltaException;
-import xyz.voltawallet.internal.model.BlockInfoResponse;
 import xyz.voltawallet.internal.model.EstimateFeeResponse;
 import xyz.voltawallet.model.UserOperation;
 
 import java.io.IOException;
-import java.math.BigInteger;
 
 interface BundleClient {
   /**
@@ -24,8 +22,4 @@ interface BundleClient {
    * @param entryPoint The entry point to send the user operation to.
    */
   String sendUserOperation(final UserOperation operation, final String entryPoint) throws IOException, VoltaException;
-
-  BigInteger suggestGasTipCap() throws IOException, VoltaException;
-
-  BlockInfoResponse lastBlockInfo() throws IOException, VoltaException;
 }

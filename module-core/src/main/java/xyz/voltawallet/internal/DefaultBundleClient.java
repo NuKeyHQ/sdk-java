@@ -9,13 +9,11 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import xyz.voltawallet.exception.VoltaException;
-import xyz.voltawallet.internal.model.BlockInfoResponse;
 import xyz.voltawallet.internal.model.EstimateFeeResponse;
 import xyz.voltawallet.internal.model.JsonRpcMessage;
 import xyz.voltawallet.model.UserOperation;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.List;
 
 class DefaultBundleClient implements BundleClient {
@@ -53,21 +51,6 @@ class DefaultBundleClient implements BundleClient {
     final String entryPoint
   ) throws IOException, VoltaException {
     return execute("eth_sendUserOperation", List.of(operation, entryPoint), String.class);
-  }
-
-  @Override
-  public BigInteger suggestGasTipCap() throws IOException, VoltaException {
-    String maxPriorityFeePerGas = execute("eth_maxPriorityFeePerGas", null, String.class);
-    try {
-      return new BigInteger(maxPriorityFeePerGas.replace("0x", ""), 16);
-    } catch (Exception e) {
-      throw new VoltaException("Failed in parse suggestGasTipCap from: " + maxPriorityFeePerGas);
-    }
-  }
-
-  @Override
-  public BlockInfoResponse lastBlockInfo() throws IOException, VoltaException {
-    return execute("eth_getBlockByNumber", List.of("latest", false), BlockInfoResponse.class);
   }
 
   private <T> T execute(String method, Object params, Class<T> type) throws IOException, VoltaException {
