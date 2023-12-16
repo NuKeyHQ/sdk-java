@@ -60,6 +60,7 @@ public class UserOperation {
   private String signature;
   @JsonIgnore
   private String entryPointAddress;
+  @JsonIgnore
   private long chainId;
 
   public UserOperation() {

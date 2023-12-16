@@ -1,4 +1,4 @@
-package xyz.voltawallet.internal.model;
+package xyz.voltawallet.model;
 
 import java.math.BigInteger;
 

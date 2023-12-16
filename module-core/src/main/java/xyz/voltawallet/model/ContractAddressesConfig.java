@@ -12,7 +12,8 @@ public class ContractAddressesConfig {
   private final String executorImplementation;
   private final String entryPoint;
 
-  public ContractAddressesConfig(String factory, String accountImplementation, String sessionKeyValidatorImplementation, String executorImplementation, String entryPoint) {
+  private ContractAddressesConfig(String factory, String accountImplementation, String sessionKeyValidatorImplementation, String executorImplementation,
+                                  String entryPoint) {
     if (!Utility.isHexAddress(factory)) throw new IllegalArgumentException("factory must be a hex address");
     if (!Utility.isHexAddress(accountImplementation)) throw new IllegalArgumentException("accountImplementation must be a hex address");
     if (!Utility.isHexAddress(sessionKeyValidatorImplementation)) throw new IllegalArgumentException("sessionKeyValidatorImplementation must be a hex address");
@@ -23,10 +24,6 @@ public class ContractAddressesConfig {
     this.sessionKeyValidatorImplementation = sessionKeyValidatorImplementation;
     this.executorImplementation = executorImplementation;
     this.entryPoint = entryPoint;
-  }
-
-  public ContractAddressesConfig(String factory, String accountImplementation, String sessionKeyValidatorImplementation, String executorImplementation) {
-    this(factory, accountImplementation, sessionKeyValidatorImplementation, executorImplementation, null);
   }
 
   public String getFactory() {
@@ -47,5 +44,52 @@ public class ContractAddressesConfig {
 
   public String getEntryPoint() {
     return entryPoint != null ? entryPoint : DEFAULT_ENTRY_POINT_ADDRESS;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private String factory;
+    private String accountImplementation;
+    private String sessionKeyValidatorImplementation;
+    private String executorImplementation;
+    private String entryPoint = DEFAULT_ENTRY_POINT_ADDRESS;
+
+    public Builder setFactory(String factory) {
+      this.factory = factory;
+      return this;
+    }
+
+    public Builder setAccountImplementation(String accountImplementation) {
+      this.accountImplementation = accountImplementation;
+      return this;
+    }
+
+    public Builder setSessionKeyValidatorImplementation(String sessionKeyValidatorImplementation) {
+      this.sessionKeyValidatorImplementation = sessionKeyValidatorImplementation;
+      return this;
+    }
+
+    public Builder setExecutorImplementation(String executorImplementation) {
+      this.executorImplementation = executorImplementation;
+      return this;
+    }
+
+    public Builder setEntryPoint(String entryPoint) {
+      this.entryPoint = entryPoint;
+      return this;
+    }
+
+    public ContractAddressesConfig build() {
+      return new ContractAddressesConfig(
+        factory,
+        accountImplementation,
+        sessionKeyValidatorImplementation,
+        executorImplementation,
+        entryPoint
+      );
+    }
   }
 }

@@ -8,11 +8,11 @@ public class VoltaSdkTest {
 
   @Test
   public void nullUrl_MustThrow() {
-    assertThrows(IllegalArgumentException.class, () -> VoltaSdk.newVoltaClient(null));
+    assertThrows(IllegalArgumentException.class, () -> VoltaSdk.newBundlerClient(null));
   }
 
   @Test
   public void emptyUrl_MustThrow() {
-    assertThrows(IllegalArgumentException.class, () -> VoltaSdk.newVoltaClient(null));
+    assertThrows(IllegalArgumentException.class, () -> VoltaSdk.newBundlerClient(null));
   }
 }

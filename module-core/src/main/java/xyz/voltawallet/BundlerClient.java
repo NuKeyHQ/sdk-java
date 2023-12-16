@@ -1,12 +1,13 @@
-package xyz.voltawallet.internal;
+package xyz.voltawallet;
 
 import xyz.voltawallet.exception.VoltaException;
-import xyz.voltawallet.internal.model.EstimateFeeResponse;
+import xyz.voltawallet.model.EstimateFeeResponse;
 import xyz.voltawallet.model.UserOperation;
+import xyz.voltawallet.model.UserOperationReceiptResponse;
 
 import java.io.IOException;
 
-interface BundleClient {
+public interface BundlerClient {
   /**
    * Estimate the gas required for a user operation.
    *
@@ -18,8 +19,15 @@ interface BundleClient {
   /**
    * Send a user operation to the blockchain.
    *
-   * @param operation  The user operation to send.
-   * @param entryPoint The entry point to send the user operation to.
+   * @param operation The user operation to send.
    */
-  String sendUserOperation(final UserOperation operation, final String entryPoint) throws IOException, VoltaException;
+  String sendUserOperation(final UserOperation operation) throws IOException, VoltaException;
+
+
+  /**
+   * Get receipt of User Operation
+   *
+   * @param userOpHash the User Operation hash
+   */
+  UserOperationReceiptResponse getUserOperationReceipt(final String userOpHash) throws IOException, VoltaException;
 }
