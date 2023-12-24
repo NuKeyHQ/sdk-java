@@ -12,7 +12,6 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
-import xyz.voltawallet.constant.Blockchain;
 import xyz.voltawallet.internal.jackson.BigIntHexDeserialize;
 import xyz.voltawallet.internal.jackson.BigIntHexSerialize;
 import xyz.voltawallet.utility.Utility;
@@ -62,7 +61,7 @@ public class UserOperation {
   @JsonIgnore
   private String entryPointAddress;
   @JsonIgnore
-  private Blockchain blockchain;
+  private long chainId;
 
   public UserOperation() {
   }
@@ -80,7 +79,7 @@ public class UserOperation {
     final String paymasterAndData,
     final String signature,
     final String entryPointAddress,
-    final Blockchain blockchain
+    final long chainId
   ) {
     this.sender = sender;
     this.nonce = nonce;
@@ -94,7 +93,7 @@ public class UserOperation {
     this.paymasterAndData = paymasterAndData;
     this.signature = signature;
     this.entryPointAddress = entryPointAddress;
-    this.blockchain = blockchain;
+    this.chainId = chainId;
   }
 
   public static Builder builder() {
@@ -125,7 +124,7 @@ public class UserOperation {
     DynamicStruct packedStruct = new DynamicStruct(
       new Bytes32(Numeric.hexStringToByteArray(hash)),
       new Address(getEntryPointAddress()),
-      new Uint256(blockchain.chainId)
+      new Uint256(chainId)
     );
     return Hash.sha3(TypeEncoder.encode(packedStruct));
   }
@@ -146,7 +145,7 @@ public class UserOperation {
     return TypeEncoder.encode(struct);
   }
 
-  public Builder copyToBuilder() {
+  public Builder buildUpon() {
     return new Builder()
       .setSender(sender)
       .setNonce(nonce)
@@ -160,7 +159,7 @@ public class UserOperation {
       .setPaymasterAndData(paymasterAndData)
       .setSignature(signature)
       .setEntryPointAddress(entryPointAddress)
-      .setBlockchain(blockchain);
+      .setChainId(chainId);
   }
 
   public String getSender() {
@@ -208,28 +207,54 @@ public class UserOperation {
   }
 
   public String getEntryPointAddress() {
-    return Utility.isHexAddress(entryPointAddress) ? entryPointAddress : Blockchain.DEFAULT_ENTRY_POINT_ADDRESS;
+    return Utility.isHexAddress(entryPointAddress) ? entryPointAddress : ContractAddressesConfig.DEFAULT_ENTRY_POINT_ADDRESS;
   }
 
-  public Blockchain getBlockchain() {
-    return blockchain;
+  @Override
+  public String toString() {
+    return String.format("""
+        Sender:               %s,
+        Nonce:                %s,
+        InitCode:             %s,
+        CallData:             %s,
+        CallGasLimit:         %s,
+        VerificationGasLimit: %s,
+        PreVerificationGas:   %s,
+        MaxFeePerGas:         %s,
+        MaxPriorityFeePerGas: %s,
+        PaymasterAndData:     %s,
+        Signature:            %s,
+        ChainId:              %d
+        """, sender,
+      Utility.toHexNumber(nonce),
+      initCode,
+      callData,
+      Utility.toHexNumber(callGasLimit),
+      Utility.toHexNumber(verificationGasLimit),
+      Utility.toHexNumber(preVerificationGas),
+      Utility.toHexNumber(maxFeePerGas),
+      Utility.toHexNumber(maxPriorityFeePerGas),
+      paymasterAndData,
+      signature,
+      chainId
+    );
   }
 
   public static class Builder {
 
     private String sender;
     private BigInteger nonce;
-    private String initCode;
-    private String callData;
+    private String initCode = "0x";
+    private String callData = "0x";
     private BigInteger callGasLimit;
     private BigInteger verificationGasLimit;
     private BigInteger preVerificationGas;
     private BigInteger maxFeePerGas;
     private BigInteger maxPriorityFeePerGas;
-    private String paymasterAndData;
-    private String signature;
+    private String paymasterAndData = "0x";
+    private String signature = "0x";
     private String entryPointAddress;
-    private Blockchain blockchain;
+    private long chainId;
 
     private Builder() {
     }
@@ -294,8 +319,8 @@ public class UserOperation {
       return this;
     }
 
-    public Builder setBlockchain(Blockchain blockchain) {
-      this.blockchain = blockchain;
+    public Builder setChainId(long chainId) {
+      this.chainId = chainId;
       return this;
     }
 
@@ -313,7 +338,7 @@ public class UserOperation {
         paymasterAndData,
         signature,
         entryPointAddress,
-        blockchain
+        chainId
       );
     }
   }
