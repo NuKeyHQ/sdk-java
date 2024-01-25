@@ -37,12 +37,11 @@ class DefaultBundlerClient implements BundlerClient {
 
   @Override
   public EstimateFeeResponse estimateUserOperationGas(
-    final UserOperation operation,
-    final String entryPoint
+    final UserOperation operation
   ) throws IOException, VoltaException {
     return execute(
       "eth_estimateUserOperationGas",
-      List.of(operation, entryPoint),
+      List.of(operation, operation.getEntryPointAddress()),
       EstimateFeeResponse.class
     );
   }

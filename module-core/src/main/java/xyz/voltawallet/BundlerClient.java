@@ -11,10 +11,9 @@ public interface BundlerClient {
   /**
    * Estimate the gas required for a user operation.
    *
-   * @param operation  The user operation to estimate the gas for.
-   * @param entryPoint The entry point to estimate the gas for.
+   * @param operation The user operation to estimate the gas for.
    */
-  EstimateFeeResponse estimateUserOperationGas(final UserOperation operation, final String entryPoint) throws IOException, VoltaException;
+  EstimateFeeResponse estimateUserOperationGas(final UserOperation operation) throws IOException, VoltaException;
 
   /**
    * Send a user operation to the blockchain.
