@@ -6,9 +6,9 @@ import xyz.voltawallet.VoltaSdk;
 import xyz.voltawallet.exception.VoltaException;
 import xyz.voltawallet.model.Call;
 import xyz.voltawallet.model.ContractAddressesConfig;
-import xyz.voltawallet.model.UserOperationReceiptResponse;
+import xyz.voltawallet.model.EstimateFeeResponse;
 import xyz.voltawallet.model.UserOperation;
-import xyz.voltawallet.model.Vault;
+import xyz.voltawallet.model.UserOperationReceiptResponse;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -20,40 +20,32 @@ import java.util.List;
  */
 public class Main {
 
-  private static final List<String> ownerAddress = List.of(
-    "0xFABBE1a2D1374B5748461D7BC8C06a82Ad9a8822",
-    "0xE6E032F418a6173c42F525EDae4CB8259471e708",
-    "0x0666A5e68f52B9Feff7Dbe38A0a389AE72bab690",
-    "0x4EE5DF6583A97c2588A2Ff1E5D5Aaf5f1aE3B415"
-  );
-
   private static final List<String> prvKeys = List.of(
-    "0xeb5664841d4c163175c45ea623e64b33599856c6116fcae603e01c8f508862b0",
-    "0x5d004a74e5e789f4df744f51afd29eac261bb84b66d59f0861b758e2de039e35"
+    "0x17e1f35a218f55b0da168295ea6f634edb75856b25903308320bd27327a89031",
+    "0xce5f01849a41c79ee382266a710ab22e1bfe72a2fc9294ab4ef942e0caa1b7fb"
   );
 
   private static final ContractAddressesConfig contractAddressesConfig = ContractAddressesConfig.builder()
-    .setFactory("0xB1313Cf059c84Fbd9d825Ba7583727c8f42f2269")
-    .setAccountImplementation("0x824dFa52C6C385cca7F0CDE0daC858090884B444")
-    .setSessionKeyValidatorImplementation("0xDe199357071f75fa0b18e39187497429601513b3")
-    .setExecutorImplementation("0x474f2dB5630717C42C113CC8b1bd6a6c65380384")
+    .setFactory("0xE671b76a1e53Dc43d0D248A4794777F6718B1021")
     .build();
+
+  private static final String sender = "0x6a7540011DCD63e2dfACBFdF140fCcd7a24cB78a";
 
   private static final String bundlerUrl = "https://api-bundler.dev.nukey.fi/polygon-mumbai";
 
   public static void main(String[] args) throws Exception {
     VaultClient vaultClient = VoltaSdk.newVaultClient(bundlerUrl, contractAddressesConfig);
     BundlerClient bundlerClient = VoltaSdk.newBundlerClient(bundlerUrl);
-    Vault vault = new Vault(ownerAddress, 2, BigInteger.ONE);
 
     // Building and sending a UsrOp to transfer some Matic
-    UserOperation usrOp = vaultClient.buildExecuteUserOperation(vault, newTransferCall("0xb56571C4944D65cEAdd424bfCC08d155b7eCd4c9", new BigDecimal("0.01")));
+    UserOperation usrOp = vaultClient.buildExecuteUserOperation(sender, newTransferCall("0xb56571C4944D65cEAdd424bfCC08d155b7eCd4c9", new BigDecimal("0.01")));
     System.out.println("--- User Operation to transfer some Matic ---");
+    usrOp = suggestFeeFor(bundlerClient, vaultClient, usrOp);
     signAndSendUsrOp(bundlerClient, usrOp);
 
     // Building and sending a batch of UsrOp to transfer some Matic
     UserOperation batchCallUsrOp = vaultClient.buildExecuteBatchUserOperation(
-      vault,
+      sender,
       List.of(
         newTransferCall("0xb56571C4944D65cEAdd424bfCC08d155b7eCd4c9", new BigDecimal("0.001")),
         newTransferCall("0x91290e8969bc43f166317Ec664f53c2f484081c9", new BigDecimal("0.002")),
@@ -61,6 +53,7 @@ public class Main {
       )
     );
     System.out.println("--- User Operation to transfer Matic to some address ---");
+    batchCallUsrOp = suggestFeeFor(bundlerClient, vaultClient, batchCallUsrOp);
     signAndSendUsrOp(bundlerClient, batchCallUsrOp);
   }
 
@@ -72,6 +65,22 @@ public class Main {
     );
   }
 
+  static UserOperation suggestFeeFor(BundlerClient bundlerClient, VaultClient vaultClient, final UserOperation userOperation) throws VoltaException, IOException {
+    BigInteger gasTipCap = vaultClient.suggestGasTipCap();
+    BigInteger baseFee = vaultClient.getBaseFeePerGas();
+    UserOperation userOp = userOperation.buildUpon()
+      .setMaxFeePerGas(gasTipCap.add(baseFee))
+      .setMaxPriorityFeePerGas(gasTipCap)
+      .build();
+
+    EstimateFeeResponse estimateFeeResponse = bundlerClient.estimateUserOperationGas(userOp);
+    return userOp.buildUpon()
+      .setCallGasLimit(increaseByPercent(estimateFeeResponse.getCallGasLimit(), 20))
+      .setPreVerificationGas(increaseByPercent(estimateFeeResponse.getPreVerificationGas(), 20))
+      .setVerificationGasLimit(increaseByPercent(estimateFeeResponse.getVerificationGasLimit(), 20))
+      .build();
+  }
+
   static void signAndSendUsrOp(BundlerClient bundlerClient, UserOperation usrOp) throws VoltaException, IOException, InterruptedException {
     usrOp.sign(prvKeys.toArray(new String[0]));
     System.out.println(usrOp);
@@ -81,6 +90,10 @@ public class Main {
 
     Thread.sleep(10_000);
     UserOperationReceiptResponse receiptResponse = bundlerClient.getUserOperationReceipt(usrOpHash);
-    System.out.println("User Operation result: " + receiptResponse.isSuccess());
+    System.out.println("User Operation result: " + (receiptResponse.isSuccess() ? "success" : "failed") + ", tx hash -> " + receiptResponse.getReceipt().getTransactionHash());
+  }
+
+  private static BigInteger increaseByPercent(BigInteger input, int percent) {
+    return BigInteger.valueOf(100 + percent).multiply(input).divide(BigInteger.valueOf(100));
   }
 }

@@ -10,5 +10,5 @@ solidity compiler (or from forge's output).
 To add or modify a contract, first generate the ABI JSON file and place it in the `contracts` directory. Then, run
 the following commands to generate the Go bindings:
 ```bash
-web3j generate solidity -a contracts/VoltaFactory.json -o src/main/java -p xyz.voltawallet.contracts
+web3j generate solidity -a contracts/VoltaAccount.json -o src/main/java -p xyz.voltawallet.contracts
 ```

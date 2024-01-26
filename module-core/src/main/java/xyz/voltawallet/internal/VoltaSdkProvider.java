@@ -35,9 +35,7 @@ public final class VoltaSdkProvider {
 
     return new DefaultVaultClient(
       EntryPoint.load(contractAddressesConfig.getEntryPoint(), web3j, transactionManager, contractGasProvider),
-      xyz.voltawallet.contracts.VoltaFactory.load(contractAddressesConfig.getFactory(), web3j, transactionManager, contractGasProvider),
       VoltaAccount.load(contractAddressesConfig.getFactory(), web3j, transactionManager, contractGasProvider),
-      createBundlerClient(bundleServiceUrl),
       contractAddressesConfig,
       web3j
     );

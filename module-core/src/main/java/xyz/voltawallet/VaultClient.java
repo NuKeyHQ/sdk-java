@@ -4,7 +4,6 @@ import org.web3j.protocol.core.methods.request.Transaction;
 import xyz.voltawallet.exception.VoltaException;
 import xyz.voltawallet.model.Call;
 import xyz.voltawallet.model.UserOperation;
-import xyz.voltawallet.model.Vault;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -21,41 +20,44 @@ public interface VaultClient {
 
 
   /**
-   * Build a User Operation to execute a {@link Call} on a {@link Vault}
+   * Build a User Operation to execute a {@link Call} from a sender
    *
-   * @param vault the {@link Vault} information
-   * @param call  the {@link Call} request
+   * @param sender the sender address
+   * @param call   the {@link Call} request
    */
-  UserOperation buildExecuteUserOperation(Vault vault, Call call) throws IOException, VoltaException;
+  UserOperation buildExecuteUserOperation(String sender, Call call) throws IOException, VoltaException;
 
   /**
-   * Build a User Operation to execute a {@link Transaction} on a {@link Vault}
+   * Build a User Operation to execute a {@link Transaction} from a sender
    *
-   * @param vault the {@link Vault} information
-   * @param tx    the {@link Transaction} request
+   * @param sender the sender address
+   * @param tx     the {@link Transaction} request
    */
-  UserOperation buildExecuteUserOperationFromTx(Vault vault, Transaction tx) throws IOException, VoltaException;
+  UserOperation buildExecuteUserOperationFromTx(String sender, Transaction tx) throws IOException, VoltaException;
 
   /**
-   * Build a User Operation to execute a batch of {@link Call} on a {@link Vault}
+   * Build a User Operation to execute a batch of {@link Call} from a sender
    *
-   * @param vault the {@link Vault} information
-   * @param calls the list of {@link Call} request
+   * @param sender the sender address
+   * @param calls  the list of {@link Call} request
    */
-  UserOperation buildExecuteBatchUserOperation(Vault vault, List<Call> calls) throws IllegalArgumentException, IOException, VoltaException;
+  UserOperation buildExecuteBatchUserOperation(String sender, List<Call> calls) throws IllegalArgumentException, IOException, VoltaException;
 
   /**
-   * Build a User Operation to execute a custom call data on a {@link Vault}
+   * Build a User Operation to execute a custom call data from a sender
    *
-   * @param vault    the {@link Vault} information
+   * @param sender   the sender address
    * @param callData the call data
    */
-  UserOperation buildCustomUserOperation(Vault vault, byte[] callData) throws IllegalArgumentException, IOException, VoltaException;
+  UserOperation buildCustomUserOperation(String sender, byte[] callData) throws IllegalArgumentException, IOException, VoltaException;
 
   /**
-   * Suggest gas price for a {@link UserOperation}
-   *
-   * @param userOperation the User Operation for estimate gas price
+   * Suggest gas tip cap on the blockchain
    */
-  UserOperation suggestUserOpGasPrice(UserOperation userOperation) throws IOException, VoltaException;
+  BigInteger suggestGasTipCap() throws IOException, VoltaException;
+
+  /**
+   * Get base fee per gas on the blockchain
+   */
+  BigInteger getBaseFeePerGas() throws IOException, VoltaException;
 }
